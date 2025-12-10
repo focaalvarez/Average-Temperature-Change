@@ -1,0 +1,69 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Tue Dec  9 22:11:21 2025
+
+@author: DELL
+"""
+import pandas as pd
+import plotly.express as px
+
+df=pd.read_csv('https://storage.googleapis.com/berkeley-earth-temperature-hr/time-series/Cities/City_Table_2025.txt',
+               delimiter='\t',index_col =False)
+
+#Preprocessing to make long df
+# Identify the non-year columns
+id_vars = ['Continent', 'Country', 'Subregion', 'City', 'Population']
+
+# Identify columns that *are* years
+value_vars = [col for col in df.columns if col.isdigit()]  # selects 1800–2024 automatically
+
+# Melt to long format
+df1 = df.melt(
+    id_vars=id_vars,
+    value_vars=value_vars,
+    var_name='Year',
+    value_name='Value'      # population value per year
+)
+
+
+# Settings for visualisation
+select_country='United States of America'
+select_years=['1930','1940','1950','1970','1960','1980','1990','2000','2010','2020','2024']
+top_bottom_to_plot=48
+
+filtered_df=df1[(df1['Country']==select_country)&(df1['Year'].isin(select_years))]
+
+# Sorting Prep: compute ordering based on 2024 values
+order_2024 = (
+    filtered_df[filtered_df["Year"] == '2024']
+    .groupby("City")["Value"]
+    .mean()          
+    .sort_values(ascending=False)
+    .index
+)
+
+l1=order_2024[:top_bottom_to_plot] #get X top
+l2=order_2024[-top_bottom_to_plot:] #get X Bottom
+# list_of_top_bottom_cities=[*l1,*l2] # to get top and bottom
+list_of_top_bottom_cities=[*l1] # to get only top
+# list_of_top_bottom_cities=[*l2] # to get only bottom
+
+filtered_df=filtered_df[(filtered_df['City'].isin(list_of_top_bottom_cities))]
+
+fig = px.bar(filtered_df, x="Year", y="Value",  barmode="group", facet_col="City",facet_col_wrap=6
+             ,color="Value",color_continuous_scale=px.colors.sequential.Bluered,
+             height = 1000,
+             facet_row_spacing=0.03,
+             labels={'Value':'°C'},
+             category_orders={"City": list_of_top_bottom_cities} ,
+             title=str('Average Temperature Change by City (top 48)- '+select_country+'<br><sup>Relative to average of 1951-1980. Source: Berkeley Earth High-Resolution (Beta)</sup>')
+       )
+
+fig.update_yaxes(matches=None, showticklabels=False, visible=False)
+
+fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
+
+fig.update_layout(plot_bgcolor="rgba(0,0,0,0)")
+
+ 
+fig.write_html("Average Temperature Change by City - "+select_country+".html",auto_open=True)
