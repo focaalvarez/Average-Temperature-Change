@@ -49,8 +49,8 @@ order_2024 = (
 l1=order_2024[:top_bottom_to_plot] #get X top
 l2=order_2024[-top_bottom_to_plot:] #get X Bottom
 # list_of_top_bottom_cities=[*l1,*l2] # to get top and bottom
-# list_of_top_bottom_cities=[*l1] # to get only top1
-list_of_top_bottom_cities=[*l2] # to get only bottom
+list_of_top_bottom_cities=[*l1] # to get only top1
+# list_of_top_bottom_cities=[*l2] # to get only bottom
 
 filtered_df=filtered_df[(filtered_df['Country'].isin(list_of_top_bottom_cities))]
 
@@ -64,7 +64,7 @@ fig = px.bar(filtered_df, x="Year", y="Value",  barmode="group", facet_col="Coun
              labels={'Value':'°C'},
              category_orders={"City": list_of_top_bottom_cities} ,
              range_color=(-1, 3.5) , ##forcing the same scale for bottom ones
-             title=str('Average Temperature Change by Country (bottom 50) <br><sup>Relative to average of 1951-1980. Source: Berkeley Earth High-Resolution (Beta)</sup>')
+             title=str('Average Temperature Change by Country (Top 50) <br><sup>Relative to average of 1951-1980. Source: Berkeley Earth High-Resolution (Beta)</sup>')
        )
 
 fig.update_yaxes(matches=None, showticklabels=False, visible=False)
@@ -74,7 +74,7 @@ fig.for_each_annotation(lambda a: a.update(text=a.text.split("=")[1]))
 fig.update_layout(plot_bgcolor="rgba(0,0,0,0)")
 
  
-fig.write_html("Average Temperature Change by Country Bottom 50.html",auto_open=True)
+fig.write_html("Average Temperature Change by Country Top 50.html",auto_open=True)
 
 
 ## Line Chart
@@ -89,6 +89,14 @@ filtered_df1=df1[(df1['Year']>'1900')&(df1['Subregion'].isna())&(df1['Value']>-1
 # filtered_df1=filtered_df1[(filtered_df1['Country'].isin(list_of_top_bottom_cities))]
 
 
+legend_order = (
+    filtered_df1[['Continent', 'Country']]
+    .drop_duplicates()
+    .sort_values(['Continent', 'Country'])
+    ['Country']
+    .tolist()
+)
+
 
 fig1 = px.line(filtered_df1, x="Year", y="Value", facet_col="Continent",facet_col_wrap=4,
                range_y=(-2,4),
@@ -98,6 +106,7 @@ fig1 = px.line(filtered_df1, x="Year", y="Value", facet_col="Continent",facet_co
                height = 600,
              labels={'Value':'°C'},
              color_discrete_sequence=px.colors.qualitative.Set2,
+             category_orders={ "Country": legend_order},
              title=str('Average Temperature Change by Country <br><sup>Relative to average of 1951-1980. Source: Berkeley Earth High-Resolution (Beta)</sup>')
              )
 
@@ -116,4 +125,4 @@ fig1.add_hline(
 )
 
 
-fig1.write_html("Line chart.html",auto_open=True)
+fig1.write_html("Line chart of Average Temp Change by Country.html",auto_open=True)
